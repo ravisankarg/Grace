@@ -2,13 +2,13 @@
 
 Grace is a private, local-first daily companion for a spiritual seeker. It is deliberately a practice app, not a scorekeeper: an honest return is recorded as progress.
 
-## Grace 0.2.6
+## Grace 0.2.7
 
-This release fixes the public model installer for Android 14–16 devices and makes meditation ambience gapless at loop boundaries. It declares the WorkManager data-sync foreground service correctly, starts foreground download work before opening the network stream, supports metered Wi-Fi without getting stuck in the queue, validates resumed ranges, verifies both models with SHA-256, detects insufficient storage, and preserves resumable `.part` files.
+This release fixes the public model installer for Android 14–16 devices and makes meditation ambience loop continuously without stopping after the second playback. It declares the WorkManager data-sync foreground service correctly, starts foreground download work before opening the network stream, supports metered Wi-Fi without getting stuck in the queue, validates resumed ranges, verifies both models with SHA-256, detects insufficient storage, and preserves resumable `.part` files.
 
-Download the signed APK from the [Grace v0.2.6 release](https://github.com/ravisankarg/Grace/releases/tag/v0.2.6), or use the direct [Grace-v0.2.6-release.apk](https://github.com/ravisankarg/Grace/releases/download/v0.2.6/Grace-v0.2.6-release.apk) link.
+Download the signed APK from the [Grace v0.2.7 release](https://github.com/ravisankarg/Grace/releases/tag/v0.2.7), or use the direct [Grace-v0.2.7-release.apk](https://github.com/ravisankarg/Grace/releases/download/v0.2.7/Grace-v0.2.7-release.apk) link.
 
-Release APK SHA-256: `3ec61fbb19fe13196202fc758416fb738fdb8712566e0ae9e4145566368655ad`
+Release APK SHA-256: `01df8ba3b7f3c0b5e46f695c50fa1672270f738d936e43a496168416b912bcc9`
 
 See the visual project story on [Grace GitHub Pages](https://ravisankarg.github.io/Grace/).
 
@@ -37,12 +37,12 @@ The installer downloads EmbeddingGemma first, then Gemma 4 E4B. It uses a foregr
 
 ## Updating without losing phone data
 
-Grace remains `com.ravi.grace` in 0.2.6. The update does not uninstall the app, clear data, rename its SharedPreferences, or remove the `filesDir` model/index paths. Installing the new APK over an existing installation preserves logged reflections, Journey history, meditation state, reminders, and downloaded models, provided the APK is signed with the same signing key.
+Grace remains `com.ravi.grace` in 0.2.7. The update does not uninstall the app, clear data, rename its SharedPreferences, or remove the `filesDir` model/index paths. Installing the new APK over an existing installation preserves logged reflections, Journey history, meditation state, reminders, and downloaded models, provided the APK is signed with the same signing key.
 
 For a developer sideload, use an update install:
 
 ```bash
-adb -s DEVICE_SERIAL install -r -d Grace-v0.2.6-release.apk
+adb -s DEVICE_SERIAL install -r -d Grace-v0.2.7-release.apk
 ```
 
 Do not use `adb uninstall`, `pm clear`, or a fresh install when the phone contains real practice data. The published APK is debug-keystore signed for sideload/testing; it is not a Play Store signing key.
@@ -61,12 +61,12 @@ For the release handoff, build the unsigned release APK, align it, sign it with 
 
 ```bash
 gradle :app:assembleRelease --console=plain
-zipalign -f -p 4 app/build/outputs/apk/release/app-release-unsigned.apk /tmp/Grace-v0.2.6-aligned.apk
+zipalign -f -p 4 app/build/outputs/apk/release/app-release-unsigned.apk /tmp/Grace-v0.2.7-aligned.apk
 apksigner sign --ks "$HOME/.android/debug.keystore" --ks-pass pass:android \
-  --out app/build/outputs/apk/release/Grace-v0.2.6-release.apk \
-  /tmp/Grace-v0.2.6-aligned.apk
-apksigner verify --verbose --print-certs app/build/outputs/apk/release/Grace-v0.2.6-release.apk
-sha256sum app/build/outputs/apk/release/Grace-v0.2.6-release.apk
+  --out app/build/outputs/apk/release/Grace-v0.2.7-release.apk \
+  /tmp/Grace-v0.2.7-aligned.apk
+apksigner verify --verbose --print-certs app/build/outputs/apk/release/Grace-v0.2.7-release.apk
+sha256sum app/build/outputs/apk/release/Grace-v0.2.7-release.apk
 ```
 
 ## Rebuild the bundled source index
@@ -87,8 +87,8 @@ Useful checks before a handoff:
 ```bash
 gradle :app:lintDebug --console=plain
 gradle :app:assembleRelease --console=plain
-apkanalyzer manifest permissions app/build/outputs/apk/release/Grace-v0.2.6-release.apk
-unzip -l app/build/outputs/apk/release/Grace-v0.2.6-release.apk | rg 'AndroidManifest|libgrace_embedding|scripture-index-v3'
+apkanalyzer manifest permissions app/build/outputs/apk/release/Grace-v0.2.7-release.apk
+unzip -l app/build/outputs/apk/release/Grace-v0.2.7-release.apk | rg 'AndroidManifest|libgrace_embedding|scripture-index-v3'
 ```
 
 The release manifest must contain `FOREGROUND_SERVICE_DATA_SYNC`, and WorkManager's `SystemForegroundService` must declare `dataSync`. The app must retain the same package name and signing certificate for an in-place update.

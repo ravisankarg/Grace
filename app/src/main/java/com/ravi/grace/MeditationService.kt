@@ -7,6 +7,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
+import android.util.Log
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -57,6 +58,7 @@ class MeditationService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var player: MediaPlayer? = null
     private var nextPlayer: MediaPlayer? = null
+    private var loopAsset: String? = null
     private val tick = object : Runnable { override fun run() { publish(); if (MeditationSession.status(this@MeditationService).secondsLeft <= 0) finishPractice() else handler.postDelayed(this, 1000L) } }
     private val prefs by lazy { getSharedPreferences("grace-meditation", Context.MODE_PRIVATE) }
 
@@ -109,11 +111,13 @@ class MeditationService : Service() {
 
         // MediaPlayer.isLooping tears down and recreates the decoder at the
         // boundary. Keeping a prepared successor lets Android hand off to the
-        // next copy directly, avoiding the audible rebuffer gap.
+        // next copy directly, avoiding the audible rebuffer gap. The successor
+        // is re-armed on every completion; setNextMediaPlayer is one-shot and
+        // must not be wired as a finite two-player cycle.
         first.setNextMediaPlayer(second)
-        second.setNextMediaPlayer(first)
         first.setOnCompletionListener { completed -> advanceLoop(completed) }
         second.setOnCompletionListener { completed -> advanceLoop(completed) }
+        loopAsset = asset
         player = first
         nextPlayer = second
         first.start()
@@ -127,9 +131,24 @@ class MeditationService : Service() {
     }
 
     private fun advanceLoop(completed: MediaPlayer) {
-        if (player === completed) {
-            player = nextPlayer
-            nextPlayer = completed
+        if (player !== completed) return
+        val successor = nextPlayer ?: return
+        val asset = loopAsset ?: return
+        runCatching {
+            // The successor is already playing. Prepare a new successor and
+            // attach it before the current successor reaches its end.
+            val replacement = createPlayer(asset)
+            successor.setNextMediaPlayer(replacement)
+            player = successor
+            nextPlayer = replacement
+            completed.release()
+        }.onFailure { error ->
+            // Keep the ambient sound alive if a rare decoder allocation fails;
+            // this fallback may have a boundary gap but must not go silent.
+            Log.e("GraceMeditation", "Could not prepare next ambience loop", error)
+            successor.isLooping = true
+            player = successor
+            nextPlayer = null
         }
     }
 
@@ -138,6 +157,7 @@ class MeditationService : Service() {
         val successor = nextPlayer
         player = null
         nextPlayer = null
+        loopAsset = null
         current?.release()
         if (successor !== current) successor?.release()
     }
