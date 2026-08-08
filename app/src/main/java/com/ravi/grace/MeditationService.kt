@@ -56,6 +56,7 @@ object MeditationSession {
 class MeditationService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var player: MediaPlayer? = null
+    private var nextPlayer: MediaPlayer? = null
     private val tick = object : Runnable { override fun run() { publish(); if (MeditationSession.status(this@MeditationService).secondsLeft <= 0) finishPractice() else handler.postDelayed(this, 1000L) } }
     private val prefs by lazy { getSharedPreferences("grace-meditation", Context.MODE_PRIVATE) }
 
@@ -101,11 +102,44 @@ class MeditationService : Service() {
     }
 
     private fun openAudio(asset: String?) {
-        player?.release(); player = null
+        releaseAudio()
         asset ?: return
-        player = assets.openFd(asset).let { afd -> MediaPlayer().apply {
-            setDataSource(afd.fileDescriptor, afd.startOffset, afd.length); isLooping = true; prepare(); start(); afd.close()
-        } }
+        val first = createPlayer(asset)
+        val second = createPlayer(asset)
+
+        // MediaPlayer.isLooping tears down and recreates the decoder at the
+        // boundary. Keeping a prepared successor lets Android hand off to the
+        // next copy directly, avoiding the audible rebuffer gap.
+        first.setNextMediaPlayer(second)
+        second.setNextMediaPlayer(first)
+        first.setOnCompletionListener { completed -> advanceLoop(completed) }
+        second.setOnCompletionListener { completed -> advanceLoop(completed) }
+        player = first
+        nextPlayer = second
+        first.start()
+    }
+
+    private fun createPlayer(asset: String): MediaPlayer = MediaPlayer().also { mediaPlayer ->
+        assets.openFd(asset).use { afd ->
+            mediaPlayer.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+        }
+        mediaPlayer.prepare()
+    }
+
+    private fun advanceLoop(completed: MediaPlayer) {
+        if (player === completed) {
+            player = nextPlayer
+            nextPlayer = completed
+        }
+    }
+
+    private fun releaseAudio() {
+        val current = player
+        val successor = nextPlayer
+        player = null
+        nextPlayer = null
+        current?.release()
+        if (successor !== current) successor?.release()
     }
 
     private fun finishPractice() {
@@ -118,7 +152,7 @@ class MeditationService : Service() {
     }
 
     private fun stopPractice() {
-        handler.removeCallbacks(tick); player?.release(); player = null; prefs.edit().clear().apply(); notifyStatus()
+        handler.removeCallbacks(tick); releaseAudio(); prefs.edit().clear().apply(); notifyStatus()
         if (Build.VERSION.SDK_INT >= 24) stopForeground(STOP_FOREGROUND_REMOVE) else @Suppress("DEPRECATION") stopForeground(true)
         stopSelf()
     }
@@ -143,5 +177,5 @@ class MeditationService : Service() {
 
     private fun formatTime(seconds: Int) = "%02d:%02d".format(seconds / 60, seconds % 60)
     override fun onBind(intent: Intent?): IBinder? = null
-    override fun onDestroy() { handler.removeCallbacks(tick); player?.release(); super.onDestroy() }
+    override fun onDestroy() { handler.removeCallbacks(tick); releaseAudio(); super.onDestroy() }
 }
