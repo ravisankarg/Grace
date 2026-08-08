@@ -1,0 +1,11 @@
+.gradle/
+.kotlin/
+.idea/
+local.properties
+app/build/
+app/.cxx/
+app/.externalNativeBuild/
+tools/__pycache__/
+*.apk
+*.idsig
+*.part

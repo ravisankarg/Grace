@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1715">
+  <meta name="description" content="Grace — a private, local-first daily companion for an honest return to stillness.">
+  <title>Grace — return to the source</title>
+  <style>
+    :root {
+      --night: #0d1715;
+      --deep: #132420;
+      --leaf: #a9c59b;
+      --mist: #eef2e8;
+      --sand: #e9dbc0;
+      --muted: #afbbb0;
+      --line: rgba(238, 242, 232, .14);
+      --gold: #d5aa67;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--mist);
+      background: var(--night);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: inherit; }
+    .wrap { width: min(1120px, calc(100% - 40px)); margin: auto; }
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 26px 0; }
+    .brand { display: flex; gap: 11px; align-items: center; color: var(--leaf); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: .78rem; }
+    .mark { width: 30px; height: 30px; border: 1px solid rgba(169,197,155,.65); border-radius: 50%; display: grid; place-items: center; }
+    .mark::after { content: ""; width: 9px; height: 14px; border-left: 1px solid var(--leaf); border-bottom: 1px solid var(--leaf); transform: rotate(-45deg) translate(2px,-1px); }
+    nav .links { display: flex; gap: 24px; color: var(--muted); font-size: .9rem; }
+    nav .links a { text-decoration: none; }
+    nav .links a:hover { color: var(--mist); }
+    .hero { min-height: 720px; display: grid; align-items: center; position: relative; overflow: hidden; }
+    .hero::before, .hero::after { content: ""; position: absolute; border-radius: 50%; filter: blur(2px); pointer-events: none; }
+    .hero::before { width: 620px; height: 620px; right: -210px; top: 20px; background: radial-gradient(circle, rgba(109,147,111,.22), transparent 67%); }
+    .hero::after { width: 460px; height: 460px; left: -280px; bottom: -200px; background: radial-gradient(circle, rgba(213,170,103,.12), transparent 68%); }
+    .eyebrow { color: var(--gold); letter-spacing: .18em; text-transform: uppercase; font-size: .72rem; font-weight: 700; }
+    h1 { max-width: 800px; margin: 20px 0 24px; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(3.5rem, 9vw, 7.6rem); line-height: .94; letter-spacing: -.055em; }
+    .hero p { max-width: 590px; margin: 0; color: var(--muted); font-size: clamp(1.05rem, 2vw, 1.3rem); }
+    .actions { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 34px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: .9rem; border: 1px solid var(--line); }
+    .button.primary { color: var(--night); background: var(--leaf); border-color: var(--leaf); }
+    .button.secondary { color: var(--mist); background: rgba(255,255,255,.04); }
+    .button:hover { transform: translateY(-1px); }
+    .quiet { margin-top: 28px; color: #7f9184; font-size: .78rem; }
+    section { padding: 110px 0; border-top: 1px solid var(--line); }
+    .section-head { display: grid; grid-template-columns: .8fr 1.2fr; gap: 50px; margin-bottom: 50px; }
+    h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(2.4rem, 5vw, 4.2rem); line-height: 1; letter-spacing: -.04em; }
+    .section-head p { margin: 0; color: var(--muted); font-size: 1.05rem; max-width: 590px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { min-height: 220px; padding: 25px; background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.018)); border: 1px solid var(--line); border-radius: 20px; }
+    .number { color: var(--gold); font-family: Georgia, serif; font-size: 1.6rem; }
+    h3 { margin: 28px 0 9px; font-size: 1.05rem; }
+    .card p { color: var(--muted); margin: 0; font-size: .92rem; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+    .quote { padding: 42px; border-radius: 24px; background: var(--sand); color: var(--night); min-height: 360px; display: flex; flex-direction: column; justify-content: space-between; }
+    .quote blockquote { margin: 0; font-family: Georgia, serif; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.05; letter-spacing: -.04em; }
+    .quote small { font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: .68rem; }
+    .dark-panel { padding: 36px; border-radius: 24px; background: var(--deep); border: 1px solid var(--line); }
+    .dark-panel h3 { margin-top: 0; font-family: Georgia, serif; font-size: 1.75rem; font-weight: 400; }
+    .dark-panel p { color: var(--muted); }
+    .pill { display: inline-block; margin: 6px 4px 0 0; padding: 6px 10px; border: 1px solid rgba(169,197,155,.3); border-radius: 999px; color: var(--leaf); font-size: .73rem; }
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .step { padding: 26px 20px 28px 0; margin-right: 20px; border-right: 1px solid var(--line); }
+    .step:last-child { border-right: 0; }
+    .step strong { display: block; color: var(--leaf); font-size: .76rem; letter-spacing: .13em; text-transform: uppercase; }
+    .step span { display: block; margin-top: 13px; color: var(--muted); font-size: .9rem; }
+    .safety { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .safety .card { min-height: 0; }
+    code { color: var(--sand); font-size: .9em; }
+    footer { padding: 38px 0 55px; color: #7f9184; font-size: .82rem; display: flex; justify-content: space-between; gap: 20px; }
+    footer a { color: var(--leaf); text-decoration: none; }
+    @media (max-width: 760px) {
+      .wrap { width: min(100% - 28px, 620px); }
+      nav .links { gap: 12px; font-size: .78rem; }
+      .hero { min-height: 620px; }
+      .section-head, .split, .safety { grid-template-columns: 1fr; gap: 24px; }
+      .grid, .steps { grid-template-columns: 1fr 1fr; }
+      .step:nth-child(2) { border-right: 0; }
+      .step:nth-child(3), .step:nth-child(4) { border-top: 1px solid var(--line); }
+      .step:nth-child(4) { border-right: 0; }
+      footer { flex-direction: column; }
+    }
+    @media (max-width: 480px) {
+      nav .links a:nth-child(2) { display: none; }
+      .grid, .steps { grid-template-columns: 1fr; }
+      .step { border-right: 0; border-bottom: 1px solid var(--line); margin: 0; padding-right: 0; }
+      .step:last-child { border-bottom: 0; }
+      .step:nth-child(3) { border-top: 0; }
+      .quote, .dark-panel { padding: 27px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <nav>
+      <a class="brand" href="#top"><span class="mark"></span><span>Grace</span></a>
+      <div class="links"><a href="#practice">The practice</a><a href="#privacy">Privacy</a><a href="https://github.com/ravisankarg/Grace">Source ↗</a></div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero" style="border-top:0; padding-top:35px;">
+      <div class="wrap">
+        <div class="eyebrow">A quiet local companion · Android</div>
+        <h1>Return to<br>the source.</h1>
+        <p>Grace turns an ordinary day into a gentle practice: notice what moved, sit with it, and come back to the stillness that was already here.</p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/ravisankarg/Grace/releases/download/v0.2.5/Grace-v0.2.5-release.apk">Download Grace 0.2.5</a>
+          <a class="button secondary" href="https://github.com/ravisankarg/Grace/releases/tag/v0.2.5">Release notes</a>
+        </div>
+        <div class="quiet">Private by design · Gemma runs on your phone · no account required</div>
+      </div>
+    </section>
+
+    <section id="practice">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Small rituals.<br>Honest progress.</h2>
+          <p>Grace is not a scorekeeper. It gives shape to the return: a morning remembered, a few minutes of stillness, a reflection named without judgment, and an evening that can begin again.</p>
+        </div>
+        <div class="grid">
+          <article class="card"><div class="number">01</div><h3>Hold the day simply</h3><p>Before sunrise, before work, before sleep — three gentle anchors that make practice visible without making it performative.</p></article>
+          <article class="card"><div class="number">02</div><h3>Name what moved</h3><p>Write or dictate a private reflection. Local Gemma recognizes one inner movement, with no cloud upload and no rule-based shortcut.</p></article>
+          <article class="card"><div class="number">03</div><h3>Wash it in wisdom</h3><p>Grace finds the closest passages from the bundled source library and leaves the evidence beside a brief, compassionate response.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="privacy">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Your inner life<br>stays yours.</h2>
+          <p>Grace is local-first from the storage boundary to the model boundary. Your records are saved in the app's private storage, and the APK update keeps the same package and data paths.</p>
+        </div>
+        <div class="split">
+          <div class="quote"><blockquote>Nothing to upload.<br>Nothing to explain.</blockquote><small>Grace · 0.2.5</small></div>
+          <div class="dark-panel">
+            <h3>What happens on device</h3>
+            <p>The three supplied books become a packaged vector index before release. On the phone, EmbeddingGemma encodes only your query and searches it locally. Gemma 4 E4B provides the private response on the device GPU.</p>
+            <span class="pill">No account</span><span class="pill">No HF token</span><span class="pill">Private records</span><span class="pill">Resumable models</span><span class="pill">SHA-256 verified</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <h2>One reflection,<br>four quiet steps.</h2>
+          <p>Wash with Jñāna makes the local pipeline visible. You can see what Grace is doing, see the passages it found, and return to the saved result later in Journey.</p>
+        </div>
+        <div class="steps">
+          <div class="step"><strong>01 · GPU ready</strong><span>Load Gemma locally with an explicit GPU backend.</span></div>
+          <div class="step"><strong>02 · Name it</strong><span>Recognize Kāma, Krodha, Mada, Mātsarya, Lobha, or Moha.</span></div>
+          <div class="step"><strong>03 · Search</strong><span>Match the reflection against the bundled source passages.</span></div>
+          <div class="step"><strong>04 · Return</strong><span>Save the evidence and a short inward-looking response.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Made for a<br>real phone.</h2>
+          <p>Grace downloads its public model artifacts only when you ask. Interrupted transfers resume from safe partial files, check the server byte range, verify the final SHA-256, and never touch your existing practice records.</p>
+        </div>
+        <div class="safety">
+          <article class="card"><h3>Safe updates</h3><p>The package remains <code>com.ravi.grace</code>. Version 0.2.5 is an in-place update: no uninstall, no data clear, no renamed preferences, and no removed model paths.</p></article>
+          <article class="card"><h3>Simple handoff</h3><p>Install the signed APK from the public release page. Keep roughly 4.1 GB free for the two local models; Wi-Fi is recommended for the transfer.</p></article>
+        </div>
+        <div class="actions"><a class="button primary" href="https://github.com/ravisankarg/Grace/releases/download/v0.2.5/Grace-v0.2.5-release.apk">Get the APK</a><a class="button secondary" href="https://github.com/ravisankarg/Grace">Explore the code</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap"><span>Grace · an honest return is progress.</span><span><a href="https://github.com/ravisankarg/Grace">ravisankarg/Grace</a> · v0.2.5</span></footer>
+</body>
+</html>
