@@ -7,7 +7,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
-import android.util.Log
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -55,11 +54,22 @@ object MeditationSession {
 }
 
 class MeditationService : Service() {
+    private companion object {
+        const val LOOP_FADE_MS = 750L
+        const val LOOP_FADE_TICK_MS = 40L
+    }
+
     private val handler = Handler(Looper.getMainLooper())
     private var player: MediaPlayer? = null
-    private var nextPlayer: MediaPlayer? = null
-    private var loopAsset: String? = null
+    private var lastPlaybackPosition = -1
+    private var fadeInStartedAt = -1L
     private val tick = object : Runnable { override fun run() { publish(); if (MeditationSession.status(this@MeditationService).secondsLeft <= 0) finishPractice() else handler.postDelayed(this, 1000L) } }
+    private val loopFadeTick = object : Runnable {
+        override fun run() {
+            updateLoopVolume()
+            if (player != null) handler.postDelayed(this, LOOP_FADE_TICK_MS)
+        }
+    }
     private val prefs by lazy { getSharedPreferences("grace-meditation", Context.MODE_PRIVATE) }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -106,21 +116,19 @@ class MeditationService : Service() {
     private fun openAudio(asset: String?) {
         releaseAudio()
         asset ?: return
-        val first = createPlayer(asset)
-        val second = createPlayer(asset)
-
-        // MediaPlayer.isLooping tears down and recreates the decoder at the
-        // boundary. Keeping a prepared successor lets Android hand off to the
-        // next copy directly, avoiding the audible rebuffer gap. The successor
-        // is re-armed on every completion; setNextMediaPlayer is one-shot and
-        // must not be wired as a finite two-player cycle.
-        first.setNextMediaPlayer(second)
-        first.setOnCompletionListener { completed -> advanceLoop(completed) }
-        second.setOnCompletionListener { completed -> advanceLoop(completed) }
-        loopAsset = asset
-        player = first
-        nextPlayer = second
-        first.start()
+        // Keep one decoder alive for the whole meditation. The native loop is
+        // much more reliable over long sessions than repeatedly preparing and
+        // releasing successor players. The volume watcher masks the boundary
+        // with a short fade-out/fade-in instead of trying to splice players.
+        player = createPlayer(asset).also { mediaPlayer ->
+            mediaPlayer.isLooping = true
+            mediaPlayer.setVolume(1f, 1f)
+            mediaPlayer.start()
+        }
+        lastPlaybackPosition = -1
+        fadeInStartedAt = -1L
+        handler.removeCallbacks(loopFadeTick)
+        handler.post(loopFadeTick)
     }
 
     private fun createPlayer(asset: String): MediaPlayer = MediaPlayer().also { mediaPlayer ->
@@ -130,36 +138,42 @@ class MeditationService : Service() {
         mediaPlayer.prepare()
     }
 
-    private fun advanceLoop(completed: MediaPlayer) {
-        if (player !== completed) return
-        val successor = nextPlayer ?: return
-        val asset = loopAsset ?: return
+    private fun updateLoopVolume() {
+        val active = player ?: return
         runCatching {
-            // The successor is already playing. Prepare a new successor and
-            // attach it before the current successor reaches its end.
-            val replacement = createPlayer(asset)
-            successor.setNextMediaPlayer(replacement)
-            player = successor
-            nextPlayer = replacement
-            completed.release()
-        }.onFailure { error ->
-            // Keep the ambient sound alive if a rare decoder allocation fails;
-            // this fallback may have a boundary gap but must not go silent.
-            Log.e("GraceMeditation", "Could not prepare next ambience loop", error)
-            successor.isLooping = true
-            player = successor
-            nextPlayer = null
+            if (!active.isPlaying) {
+                lastPlaybackPosition = -1
+                fadeInStartedAt = -1L
+                active.setVolume(1f, 1f)
+                return
+            }
+
+            val position = active.currentPosition
+            val duration = active.duration
+            val now = SystemClock.uptimeMillis()
+            val wrapped = lastPlaybackPosition >= 0 && position + 100 < lastPlaybackPosition
+            if (wrapped) fadeInStartedAt = now
+
+            val fadingIn = fadeInStartedAt >= 0 && now - fadeInStartedAt < LOOP_FADE_MS
+            val gain = when {
+                fadingIn -> ((now - fadeInStartedAt).toFloat() / LOOP_FADE_MS).coerceIn(0f, 1f)
+                duration > 0 && duration - position <= LOOP_FADE_MS ->
+                    ((duration - position).toFloat() / LOOP_FADE_MS).coerceIn(0f, 1f)
+                else -> 1f
+            }
+            active.setVolume(gain, gain)
+            if (!fadingIn) fadeInStartedAt = -1L
+            lastPlaybackPosition = position
         }
     }
 
     private fun releaseAudio() {
         val current = player
-        val successor = nextPlayer
         player = null
-        nextPlayer = null
-        loopAsset = null
+        handler.removeCallbacks(loopFadeTick)
+        lastPlaybackPosition = -1
+        fadeInStartedAt = -1L
         current?.release()
-        if (successor !== current) successor?.release()
     }
 
     private fun finishPractice() {
