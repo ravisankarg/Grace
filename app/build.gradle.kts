@@ -15,13 +15,8 @@ android {
         applicationId = "com.ravi.grace"
         minSdk = 29
         targetSdk = 34
-        versionCode = 10
-        versionName = "0.2.8"
-        ndk { abiFilters += "arm64-v8a" }
-
-        externalNativeBuild {
-            cmake { cppFlags += "-std=c++17" }
-        }
+        versionCode = 11
+        versionName = "0.3.0"
     }
     buildTypes {
         release {
@@ -34,9 +29,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures { compose = true; buildConfig = true }
-    externalNativeBuild {
-        cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" }
-    }
 }
 
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
@@ -49,9 +41,4 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.8")
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.8")
     implementation("androidx.compose.material3:material3:1.2.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
-    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-    implementation("com.google.ai.edge.litertlm:litertlm-android:0.14.0")
 }

@@ -9,23 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.util.Calendar
-
-/** Records bundled source availability; LibraryIndexWorker performs the actual local semantic index. */
-class LibraryDiscoveryWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        val books = applicationContext.assets.list("books")?.filter { it.endsWith(".pdf", true) }.orEmpty()
-        if (books.isEmpty()) LibraryIndexStatus.update(applicationContext, "No source books found")
-        else if (!ModelStatus.embeddingInstalled(applicationContext)) LibraryIndexStatus.update(applicationContext, "${books.size} source books ready · waiting for EmbeddingGemma")
-        Result.success()
-    }
-}
 
 object MorningReminder {
     private const val morningRequestCode = 701
